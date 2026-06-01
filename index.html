@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bank Statement Dashboard - Visualize financial data from CSV">
+    <meta name="author" content="Your Name">
+    <title>Bank Statement Dashboard</title>
+
+    <!-- Google Fonts for professional typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- External CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ========================================
+         MAIN CONTAINER
+         Wraps the entire application
+         ======================================== -->
+    <div class="container">
+
+        <!-- ========================================
+             HEADER SECTION
+             Application title and description
+             ======================================== -->
+        <header>
+            <div class="logo">
+                <span class="logo-icon">◈</span>
+            </div>
+            <h1>Bank Statement Dashboard</h1>
+            <p class="subtitle">Upload a CSV statement. See where your money goes.</p>
+        </header>
+
+        <!-- ========================================
+             UPLOAD SECTION
+             File input and parse button
+             Visible initially, hidden after parsing
+             ======================================== -->
+        <section class="upload-section" id="uploadSection">
+            <div class="upload-box">
+
+                <!-- Upload visual indicator -->
+                <div class="upload-visual">
+                    <span class="upload-arrow">↑</span>
+                </div>
+
+                <h2>Drop your CSV here</h2>
+
+                <!-- Instructions -->
+                <p class="upload-hint">
+                    Format: Date, Description, Amount, Category
+                </p>
+
+                <!-- File Input (hidden, triggered by label) -->
+                <div class="file-input-wrapper">
+                    <input type="file"
+                           id="csvFile"
+                           accept=".csv"
+                           aria-label="Upload CSV file">
+                    <label for="csvFile" class="file-input-label" id="fileLabel">
+                        <span id="fileName">Choose File</span>
+                    </label>
+                </div>
+
+                <!-- Parse Button (disabled until file selected) -->
+                <button id="parseButton"
+                        class="btn-primary"
+                        onclick="loadCSV()"
+                        disabled>
+                    Parse &amp; Visualize
+                </button>
+
+                <!-- Loading Indicator (hidden by default) -->
+                <div id="loadingIndicator" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Reading your transactions...</p>
+                </div>
+
+                <!-- Error Message (hidden by default) -->
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    <p id="errorText"></p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ========================================
+             DASHBOARD SECTION
+             Hidden until CSV data is loaded
+             ======================================== -->
+        <section id="dashboard" class="dashboard" style="display: none;">
+
+            <!-- Success Banner -->
+            <div class="success-banner" id="successBanner">
+                <span class="success-icon">✓</span>
+                Loaded <strong id="txnCountMsg">0</strong> transactions
+            </div>
+
+            <!-- ========================================
+                 SUMMARY STATISTICS CARDS
+                 Shows income, expenses, balance, count
+                 ======================================== -->
+            <div class="stats-grid">
+
+                <div class="stat-card stat-income">
+                    <p class="stat-label">Total Income</p>
+                    <p class="stat-value" id="income">$0.00</p>
+                </div>
+
+                <div class="stat-card stat-expense">
+                    <p class="stat-label">Total Expenses</p>
+                    <p class="stat-value" id="expenses">$0.00</p>
+                </div>
+
+                <div class="stat-card stat-balance">
+                    <p class="stat-label">Net Balance</p>
+                    <p class="stat-value" id="balance">$0.00</p>
+                </div>
+
+                <div class="stat-card stat-count">
+                    <p class="stat-label">Transactions</p>
+                    <p class="stat-value" id="transactionCount">0</p>
+                </div>
+
+            </div>
+
+            <!-- ========================================
+                 CHARTS SECTION
+                 Uses Chart.js (3rd-party API)
+                 ======================================== -->
+            <div class="charts-section">
+                <h2 class="section-title">Visual Breakdown</h2>
+
+                <div class="charts-grid">
+
+                    <!-- Pie Chart: Category Spending -->
+                    <div class="chart-box">
+                        <h3 class="chart-label">Spending by Category</h3>
+                        <canvas id="pieChart"
+                                aria-label="Pie chart showing spending by category">
+                        </canvas>
+                    </div>
+
+                    <!-- Bar Chart: Income vs Expenses -->
+                    <div class="chart-box">
+                        <h3 class="chart-label">Income vs Expenses</h3>
+                        <canvas id="barChart"
+                                aria-label="Bar chart comparing income and expenses">
+                        </canvas>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================
+                 TRANSACTION TABLE
+                 Sortable and filterable
+                 ======================================== -->
+            <div class="table-section">
+                <h2 class="section-title">All Transactions</h2>
+
+                <!-- Search & Filter Controls -->
+                <div class="table-controls">
+                    <div class="search-box">
+                        <span class="search-icon">⌕</span>
+                        <input type="text"
+                               id="searchInput"
+                               placeholder="Search transactions..."
+                               onkeyup="filterTable()"
+                               aria-label="Search transactions">
+                    </div>
+
+                    <select id="categoryFilter"
+                            onchange="filterTable()"
+                            aria-label="Filter by category">
+                        <option value="">All Categories</option>
+                        <option value="Income">Income</option>
+                        <option value="Food & Beverage">Food & Beverage</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Responsive Table Wrapper -->
+                <div class="table-wrapper">
+                    <table id="transactionTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('date')" class="sortable">
+                                    Date <span class="sort-arrow">↕</span>
+                                </th>
+                                <th onclick="sortTable('description')" class="sortable">
+                                    Description <span class="sort-arrow">↕</span>
+                                </th>
+                                <th onclick="sortTable('category')" class="sortable">
+                                    Category <span class="sort-arrow">↕</span>
+                                </th>
+                                <th onclick="sortTable('amount')" class="sortable">
+                                    Amount <span class="sort-arrow">↕</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Rows populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Row Count Indicator -->
+                <p class="table-meta">
+                    Showing <strong id="visibleRows">0</strong> of
+                    <strong id="totalRows">0</strong> transactions
+                </p>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="action-bar">
+                <button onclick="resetDashboard()" class="btn-secondary">
+                    ↻ Upload New Statement
+                </button>
+            </div>
+
+        </section>
+    </div>
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+    <footer>
+        <p>Bank Statement Dashboard &middot; Programming Fundamentals 2025</p>
+    </footer>
+
+    <!-- ========================================
+         EXTERNAL SCRIPTS
+         Chart.js loaded from CDN (3rd-party API)
+         ======================================== -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Application JavaScript -->
+    <script src="script.js"></script>
+
+</body>
+</html>
