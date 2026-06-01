@@ -2,7 +2,7 @@
 
 > Upload a CSV bank statement. See where your money goes.
 
-**Live Demo**: [https://joyceisgrumpy-del.github.io/bank-statement-dashboard](https://yourusername.github.io/bank-statement-dashboard)
+**Live Demo**: [https://joyceisgrumpy-del.github.io/bank-statement-dashboard](https://joyceisgrumpy-del.github.io/bank-statement-dashboard)
 
 ---
 
@@ -11,7 +11,7 @@
 Bank Statement Dashboard is a web application that parses CSV bank statements and transforms them into interactive visual dashboards. Built with vanilla JavaScript and Chart.js, it runs entirely in the browser with no backend required.
 
 **Theme**: Digital Literacy & Financial Wellness  
-**Course**: Programming Fundamentals (2025)
+**Course**: Programming Fundamentals (2026)
 
 ---
 
@@ -47,7 +47,7 @@ Bank Statement Dashboard is a web application that parses CSV bank statements an
 
 ### Local
 ```bash
-git clone https://github.com/yourusername/bank-statement-dashboard.git
+git clone https://github.com/joyceisgrumpy-del/bank-statement-dashboard.git
 cd bank-statement-dashboard
 open index.html
 ```
@@ -56,7 +56,7 @@ No build tools or dependencies to install — just open in a browser.
 ### GitHub Pages
 1. Fork this repository
 2. Settings → Pages → Deploy from `main` branch
-3. Visit `https://yourusername.github.io/bank-statement-dashboard`
+3. Visit `https://joyceisgrumpy-del.github.io/bank-statement-dashboard`
 
 ---
 
@@ -180,8 +180,8 @@ bank-statement-dashboard/
 
 ## Author
 
-**Your Name**  
-Programming Fundamentals — 2025
+**Joyce Gan**  
+Programming Fundamentals — 2026
 
 ---
 

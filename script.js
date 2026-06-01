@@ -1,6 +1,6 @@
 // ============================================
 // BANK STATEMENT DASHBOARD - JAVASCRIPT
-// Programming Fundamentals Project 2025
+// Programming Fundamentals Project 2026
 //
 // PIPELINE: CSV Upload → Parse → Chart.js API → Dashboard
 //
