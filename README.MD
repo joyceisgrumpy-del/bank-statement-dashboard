@@ -2,7 +2,7 @@
 
 > Upload a CSV bank statement. See where your money goes.
 
-**Live Demo**: [https://yourusername.github.io/bank-statement-dashboard](https://yourusername.github.io/bank-statement-dashboard)
+**Live Demo**: [https://joyceisgrumpy-del.github.io/bank-statement-dashboard](https://yourusername.github.io/bank-statement-dashboard)
 
 ---
 
