@@ -477,15 +477,20 @@ body.dashboard-active {
     padding: var(--sp-md);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-    flex: 1;
-    min-height: 0;
+    flex: 1 1 0;           /* Equal height for both charts */
+    min-height: 200px;
+    max-height: 50%;        /* Each chart takes half the column */
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .chart-box canvas {
     flex: 1;
     min-height: 0;
+    max-height: 100%;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .chart-box:hover {

@@ -610,7 +610,15 @@ function createPieChart() {
                 data: data,          // Numeric values for each slice
                 backgroundColor: colors,
                 borderWidth: 2,
-                borderColor: '#ffffff'
+                borderColor: '#ffffff',
+
+                // INTERACTIVE: Slices pop out when hovered
+                // hoverOffset controls how far the slice pops out in pixels
+                hoverOffset: 25,
+
+                // Slightly expand border on hover for emphasis
+                hoverBorderWidth: 3,
+                hoverBorderColor: '#333333'
             }]
         },
 
@@ -619,18 +627,32 @@ function createPieChart() {
             responsive: true,
             maintainAspectRatio: false,
 
+            // Smooth animation when chart loads
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 800
+            },
+
             plugins: {
                 // Legend (labels below the chart)
                 legend: {
                     position: 'bottom',
                     labels: {
-                        padding: 16,
-                        font: { family: "'DM Sans', sans-serif", size: 12 }
+                        padding: 12,
+                        usePointStyle: true,       // Use circles instead of squares
+                        pointStyle: 'circle',
+                        font: { family: "'DM Sans', sans-serif", size: 11 }
                     }
                 },
 
                 // Tooltip (popup on hover)
                 tooltip: {
+                    backgroundColor: '#1a1a2e',
+                    titleFont: { family: "'DM Sans', sans-serif", size: 13, weight: '600' },
+                    bodyFont: { family: "'Space Mono', monospace", size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         // Custom formatting for tooltip text
                         label: function(context) {
@@ -725,6 +747,11 @@ function createBarChart() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
+                    backgroundColor: '#1a1a2e',
+                    titleFont: { family: "'DM Sans', sans-serif", size: 13, weight: '600' },
+                    bodyFont: { family: "'Space Mono', monospace", size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
                     callbacks: {
                         label: function(context) {
                             return '$' + context.parsed.y.toFixed(2);
