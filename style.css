@@ -1,6 +1,6 @@
 /* ============================================
    BANK STATEMENT DASHBOARD - STYLESHEET
-   Programming Fundamentals Project 2026
+   Programming Fundamentals Project 2025
 
    Design Direction: Clean financial dashboard
    with warm neutrals and sharp accent colors.
@@ -147,6 +147,7 @@ header h1 {
 .upload-box:hover {
     border-color: var(--accent);
 }
+
 /* Visual feedback when dragging a file over the upload area */
 .upload-box.drag-over {
     border-color: var(--positive);
@@ -357,23 +358,23 @@ input[type="file"] {
    STATISTICS CARDS
    ============================================ */
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--sp-md);
-    margin-bottom: var(--sp-xl);
+    display: flex;
+    gap: var(--sp-sm);
+    flex: 1;
 }
 
 .stat-card {
-    background: var(--white);
-    padding: var(--sp-lg);
+    flex: 1;
+    padding: var(--sp-md);
     border-radius: var(--radius-md);
+    background: var(--white);
     box-shadow: var(--shadow-sm);
     border-top: 3px solid var(--stone);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
@@ -383,50 +384,108 @@ input[type="file"] {
 .stat-count { border-top-color: var(--amber); }
 
 .stat-label {
-    font-size: 0.78em;
+    font-size: 0.7em;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--slate);
     font-weight: 600;
-    margin-bottom: var(--sp-sm);
+    margin-bottom: var(--sp-xs);
 }
 
 .stat-value {
     font-family: var(--font-mono);
-    font-size: 1.8em;
+    font-size: 1.3em;
     font-weight: 700;
     color: var(--ink);
     line-height: 1.2;
 }
 
 /* ============================================
-   CHARTS
+   DASHBOARD - SINGLE SCREEN LAYOUT
+   No page scrolling. Charts left, table right.
    ============================================ */
-.charts-section {
-    margin-bottom: var(--sp-xl);
+
+/* When dashboard is visible, lock the page */
+body.dashboard-active {
+    overflow: hidden;
 }
 
-.section-title {
-    font-size: 1.4em;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: var(--sp-lg);
+body.dashboard-active .container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: var(--sp-md);
+    border-radius: 0;
+    max-width: 100%;
+    box-shadow: none;
+}
+
+body.dashboard-active header {
+    margin-bottom: var(--sp-md);
     padding-bottom: var(--sp-sm);
-    border-bottom: 2px solid var(--sand);
 }
 
-.charts-grid {
+body.dashboard-active header h1 {
+    font-size: 1.6em;
+}
+
+body.dashboard-active {
+    background: var(--sand);
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;  /* Allows flex children to shrink */
+}
+
+/* Top bar: stats + reset button */
+.dash-topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-md);
+    margin-bottom: var(--sp-md);
+}
+
+.btn-reset {
+    white-space: nowrap;
+    padding: 10px 20px;
+    font-size: 0.85em;
+}
+
+/* Main body: two columns */
+.dash-body {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--sp-lg);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-md);
+    flex: 1;
+    min-height: 0;  /* Critical: allows content to fit */
+}
+
+/* LEFT COLUMN: Charts */
+.dash-left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .chart-box {
     background: var(--white);
-    padding: var(--sp-lg);
+    padding: var(--sp-md);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.25s ease;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-box canvas {
+    flex: 1;
+    min-height: 0;
 }
 
 .chart-box:hover {
@@ -434,25 +493,42 @@ input[type="file"] {
 }
 
 .chart-label {
-    font-size: 0.85em;
+    font-size: 0.78em;
     font-weight: 600;
     color: var(--charcoal);
-    margin-bottom: var(--sp-md);
+    margin-bottom: var(--sp-sm);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+/* RIGHT COLUMN: Transaction list */
+.dash-right {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: var(--sp-md);
+}
+
+.panel-title {
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: var(--sp-sm);
+    flex-shrink: 0;
 }
 
 /* ============================================
-   TABLE
+   TABLE (inside right panel)
    ============================================ */
-.table-section {
-    margin-bottom: var(--sp-xl);
-}
-
 .table-controls {
     display: flex;
-    gap: var(--sp-md);
-    margin-bottom: var(--sp-md);
+    gap: var(--sp-sm);
+    margin-bottom: var(--sp-sm);
+    flex-shrink: 0;
 }
 
 .search-box {
@@ -462,38 +538,39 @@ input[type="file"] {
 
 .search-icon {
     position: absolute;
-    left: 14px;
+    left: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--slate);
-    font-size: 1.1em;
+    font-size: 1em;
 }
 
 #searchInput {
     width: 100%;
-    padding: 11px 14px 11px 40px;
+    padding: 8px 12px 8px 34px;
     border: 1.5px solid var(--stone);
     border-radius: var(--radius-full);
     font-family: var(--font-main);
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--ink);
-    background: var(--white);
+    background: var(--cream);
     transition: border-color 0.2s ease;
 }
 
 #searchInput:focus {
     outline: none;
     border-color: var(--accent);
+    background: var(--white);
 }
 
 #categoryFilter {
-    padding: 11px 18px;
+    padding: 8px 14px;
     border: 1.5px solid var(--stone);
     border-radius: var(--radius-full);
     font-family: var(--font-main);
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--ink);
-    background: var(--white);
+    background: var(--cream);
     cursor: pointer;
     transition: border-color 0.2s ease;
 }
@@ -503,11 +580,32 @@ input[type="file"] {
     border-color: var(--accent);
 }
 
-.table-wrapper {
-    overflow-x: auto;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    background: var(--white);
+/* Scrollable table container */
+.table-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--sand);
+    min-height: 0;
+}
+
+/* Custom scrollbar */
+.table-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+    background: var(--cream);
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+    background: var(--stone);
+    border-radius: 3px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--slate);
 }
 
 table {
@@ -518,12 +616,15 @@ table {
 thead {
     background: var(--ink);
     color: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 th {
-    padding: 14px 16px;
+    padding: 10px 12px;
     text-align: left;
-    font-size: 0.78em;
+    font-size: 0.72em;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -545,8 +646,8 @@ th.sortable:hover {
 }
 
 td {
-    padding: 14px 16px;
-    font-size: 0.92em;
+    padding: 9px 12px;
+    font-size: 0.82em;
     border-bottom: 1px solid var(--sand);
 }
 
@@ -563,21 +664,21 @@ tbody tr:hover {
     color: var(--positive);
     font-family: var(--font-mono);
     font-weight: 700;
-    font-size: 0.88em;
+    font-size: 0.85em;
 }
 
 .expense {
     color: var(--negative);
     font-family: var(--font-mono);
     font-weight: 700;
-    font-size: 0.88em;
+    font-size: 0.85em;
 }
 
 .category-badge {
     display: inline-block;
-    padding: 3px 10px;
+    padding: 2px 8px;
     border-radius: var(--radius-full);
-    font-size: 0.78em;
+    font-size: 0.72em;
     font-weight: 600;
     background: var(--cream);
     color: var(--charcoal);
@@ -585,19 +686,11 @@ tbody tr:hover {
 }
 
 .table-meta {
-    margin-top: var(--sp-md);
+    margin-top: var(--sp-sm);
     text-align: right;
-    font-size: 0.82em;
+    font-size: 0.75em;
     color: var(--slate);
-}
-
-/* ============================================
-   ACTION BAR
-   ============================================ */
-.action-bar {
-    text-align: center;
-    padding-top: var(--sp-lg);
-    border-top: 1px solid var(--sand);
+    flex-shrink: 0;
 }
 
 /* ============================================
@@ -605,9 +698,13 @@ tbody tr:hover {
    ============================================ */
 footer {
     text-align: center;
-    padding: var(--sp-xl) var(--sp-md);
+    padding: var(--sp-md);
     color: var(--slate);
     font-size: 0.85em;
+}
+
+body.dashboard-active footer {
+    display: none;
 }
 
 /* ============================================
@@ -617,11 +714,29 @@ footer {
 /* Tablet */
 @media (max-width: 900px) {
     .stats-grid {
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .charts-grid {
+    .dash-body {
         grid-template-columns: 1fr;
+    }
+
+    body.dashboard-active .container {
+        height: auto;
+        overflow: auto;
+    }
+
+    body.dashboard-active {
+        overflow: auto;
+    }
+
+    .dash-left {
+        max-height: 500px;
+    }
+
+    .table-scroll {
+        max-height: 400px;
     }
 }
 
@@ -640,11 +755,16 @@ footer {
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dash-topbar {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .stat-value {
-        font-size: 1.5em;
+        font-size: 1.1em;
     }
 
     .table-controls {
@@ -652,7 +772,8 @@ footer {
     }
 
     th, td {
-        padding: 10px 12px;
+        padding: 8px 10px;
+        font-size: 0.78em;
     }
 }
 
@@ -661,7 +782,7 @@ footer {
    ============================================ */
 @media print {
     body { background: white; }
-    .upload-section, .action-bar, footer { display: none; }
+    .upload-section, footer { display: none; }
     .container { box-shadow: none; }
     .stat-card { box-shadow: none; border: 1px solid #ddd; }
 }

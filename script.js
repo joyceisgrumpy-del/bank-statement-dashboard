@@ -1,6 +1,6 @@
 // ============================================
 // BANK STATEMENT DASHBOARD - JAVASCRIPT
-// Programming Fundamentals Project 2026
+// Programming Fundamentals Project 2025
 //
 // PIPELINE: CSV Upload → Parse → Chart.js API → Dashboard
 //
@@ -68,63 +68,76 @@ let currentSort = {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📊 Dashboard initialized and ready');
 
+    // Get the file input element from the HTML
+    // CONCEPT: document.getElementById() finds an HTML element by its id attribute
     const fileInput = document.getElementById('csvFile');
+
+    // When user selects a file, call handleFileSelect
+    // CONCEPT: 'change' event fires when the input value changes
     fileInput.addEventListener('change', handleFileSelect);
 
     // ---- DRAG AND DROP SETUP ----
     // CONCEPT: Drag-and-drop uses 4 events: dragenter, dragover, dragleave, drop
     // Think of it like catching a ball:
     //   dragenter = you see the ball coming
-    //   dragover  = the ball is above your hands
+    //   dragover  = the ball is above your hands (must prevent default to allow drop)
     //   dragleave = the ball moved away
     //   drop      = you caught the ball
 
     const uploadBox = document.getElementById('uploadSection').querySelector('.upload-box');
 
-    // When file is dragged OVER the box - must preventDefault to allow drop
+    // When a file is dragged OVER the upload box
+    // CONCEPT: preventDefault() stops the browser from opening the file itself
     uploadBox.addEventListener('dragover', function(event) {
         event.preventDefault();
         uploadBox.classList.add('drag-over');
     });
 
-    // When file enters the box area
+    // When a file enters the upload box area
     uploadBox.addEventListener('dragenter', function(event) {
         event.preventDefault();
         uploadBox.classList.add('drag-over');
     });
 
-    // When file leaves the box area
+    // When a file leaves the upload box area
     uploadBox.addEventListener('dragleave', function(event) {
         event.preventDefault();
         uploadBox.classList.remove('drag-over');
     });
 
-    // When file is DROPPED
+    // When a file is DROPPED onto the upload box
     uploadBox.addEventListener('drop', function(event) {
+        // Prevent browser from opening the file
         event.preventDefault();
+
+        // Remove the visual highlight
         uploadBox.classList.remove('drag-over');
 
         // Get the dropped file
+        // CONCEPT: event.dataTransfer.files holds files that were dragged in
         const droppedFile = event.dataTransfer.files[0];
 
+        // Check if a file was actually dropped
         if (!droppedFile) {
             return;
         }
 
-        // Validate CSV
+        // Validate it's a CSV file
         if (!droppedFile.name.endsWith('.csv')) {
             showError('Please drop a CSV file (.csv extension)');
             return;
         }
 
-        // Assign dropped file to the file input
+        // Put the dropped file into our file input
+        // CONCEPT: DataTransfer lets us assign files to an input element
         const fileInput = document.getElementById('csvFile');
         fileInput.files = event.dataTransfer.files;
 
-        // Update UI
+        // Update the UI (same as if they clicked "Choose File")
         document.getElementById('fileName').textContent = droppedFile.name;
         document.getElementById('parseButton').disabled = false;
 
+        // Visual feedback on the label
         const fileLabel = document.getElementById('fileLabel');
         fileLabel.style.borderColor = '#2ec4a0';
         fileLabel.style.background = '#eefbf6';
@@ -428,7 +441,10 @@ function generateDashboard() {
     document.getElementById('uploadSection').style.display = 'none';
 
     // Show the dashboard section
-    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'flex';
+
+    // Activate full-screen dashboard layout
+    document.body.classList.add('dashboard-active');
 
     // Update the success message
     document.getElementById('txnCountMsg').textContent = allTransactions.length;
@@ -601,7 +617,7 @@ function createPieChart() {
         // Chart configuration options
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
 
             plugins: {
                 // Legend (labels below the chart)
@@ -684,7 +700,7 @@ function createBarChart() {
 
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
 
             scales: {
                 y: {
@@ -903,6 +919,9 @@ function resetDashboard() {
     // Hide dashboard, show upload
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('uploadSection').style.display = 'block';
+
+    // Remove full-screen layout
+    document.body.classList.remove('dashboard-active');
 
     // Clear search/filter
     document.getElementById('searchInput').value = '';

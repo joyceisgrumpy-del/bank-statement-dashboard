@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Bank Statement Dashboard - Visualize financial data from CSV">
-    <meta name="author" content="Joyce Gan">
+    <meta name="author" content="Your Name">
     <title>Bank Statement Dashboard</title>
 
     <!-- Google Fonts for professional typography -->
@@ -90,52 +90,51 @@
 
         <!-- ========================================
              DASHBOARD SECTION
-             Hidden until CSV data is loaded
+             Single-screen layout: no page scrolling
+             Left: charts | Right: scrollable transactions
              ======================================== -->
         <section id="dashboard" class="dashboard" style="display: none;">
 
-            <!-- Success Banner -->
-            <div class="success-banner" id="successBanner">
-                <span class="success-icon">✓</span>
-                Loaded <strong id="txnCountMsg">0</strong> transactions
+            <!-- ========================================
+                 TOP BAR: Stats + Reset
+                 ======================================== -->
+            <div class="dash-topbar">
+
+                <!-- Summary Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-income">
+                        <p class="stat-label">Income</p>
+                        <p class="stat-value" id="income">$0.00</p>
+                    </div>
+                    <div class="stat-card stat-expense">
+                        <p class="stat-label">Expenses</p>
+                        <p class="stat-value" id="expenses">$0.00</p>
+                    </div>
+                    <div class="stat-card stat-balance">
+                        <p class="stat-label">Balance</p>
+                        <p class="stat-value" id="balance">$0.00</p>
+                    </div>
+                    <div class="stat-card stat-count">
+                        <p class="stat-label">Transactions</p>
+                        <p class="stat-value" id="transactionCount">0</p>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <button onclick="resetDashboard()" class="btn-secondary btn-reset">
+                    ↻ New File
+                </button>
+
             </div>
 
             <!-- ========================================
-                 SUMMARY STATISTICS CARDS
-                 Shows income, expenses, balance, count
+                 MAIN CONTENT: Two-column layout
+                 Left = Charts | Right = Transaction List
                  ======================================== -->
-            <div class="stats-grid">
+            <div class="dash-body">
 
-                <div class="stat-card stat-income">
-                    <p class="stat-label">Total Income</p>
-                    <p class="stat-value" id="income">$0.00</p>
-                </div>
-
-                <div class="stat-card stat-expense">
-                    <p class="stat-label">Total Expenses</p>
-                    <p class="stat-value" id="expenses">$0.00</p>
-                </div>
-
-                <div class="stat-card stat-balance">
-                    <p class="stat-label">Net Balance</p>
-                    <p class="stat-value" id="balance">$0.00</p>
-                </div>
-
-                <div class="stat-card stat-count">
-                    <p class="stat-label">Transactions</p>
-                    <p class="stat-value" id="transactionCount">0</p>
-                </div>
-
-            </div>
-
-            <!-- ========================================
-                 CHARTS SECTION
-                 Uses Chart.js (3rd-party API)
-                 ======================================== -->
-            <div class="charts-section">
-                <h2 class="section-title">Visual Breakdown</h2>
-
-                <div class="charts-grid">
+                <!-- LEFT COLUMN: Charts -->
+                <div class="dash-left">
 
                     <!-- Pie Chart: Category Spending -->
                     <div class="chart-box">
@@ -154,77 +153,77 @@
                     </div>
 
                 </div>
-            </div>
 
-            <!-- ========================================
-                 TRANSACTION TABLE
-                 Sortable and filterable
-                 ======================================== -->
-            <div class="table-section">
-                <h2 class="section-title">All Transactions</h2>
+                <!-- RIGHT COLUMN: Transaction List (scrollable) -->
+                <div class="dash-right">
 
-                <!-- Search & Filter Controls -->
-                <div class="table-controls">
-                    <div class="search-box">
-                        <span class="search-icon">⌕</span>
-                        <input type="text"
-                               id="searchInput"
-                               placeholder="Search transactions..."
-                               onkeyup="filterTable()"
-                               aria-label="Search transactions">
+                    <h3 class="panel-title">Transactions</h3>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="table-controls">
+                        <div class="search-box">
+                            <span class="search-icon">⌕</span>
+                            <input type="text"
+                                   id="searchInput"
+                                   placeholder="Search..."
+                                   onkeyup="filterTable()"
+                                   aria-label="Search transactions">
+                        </div>
+                        <select id="categoryFilter"
+                                onchange="filterTable()"
+                                aria-label="Filter by category">
+                            <option value="">All</option>
+                            <option value="Income">Income</option>
+                            <option value="Food & Beverage">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Pet Care">Pet Care</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Transfer">Transfer</option>
+                            <option value="Investment">Investment</option>
+                            <option value="Donation">Donation</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
 
-                    <select id="categoryFilter"
-                            onchange="filterTable()"
-                            aria-label="Filter by category">
-                        <option value="">All Categories</option>
-                        <option value="Income">Income</option>
-                        <option value="Food & Beverage">Food & Beverage</option>
-                        <option value="Transport">Transport</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Shopping">Shopping</option>
-                        <option value="Utilities">Utilities</option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <!-- Scrollable Table -->
+                    <div class="table-scroll">
+                        <table id="transactionTable">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortTable('date')" class="sortable">
+                                        Date <span class="sort-arrow">↕</span>
+                                    </th>
+                                    <th onclick="sortTable('description')" class="sortable">
+                                        Description <span class="sort-arrow">↕</span>
+                                    </th>
+                                    <th onclick="sortTable('category')" class="sortable">
+                                        Category <span class="sort-arrow">↕</span>
+                                    </th>
+                                    <th onclick="sortTable('amount')" class="sortable">
+                                        Amount <span class="sort-arrow">↕</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Rows populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Row Count -->
+                    <p class="table-meta">
+                        Showing <strong id="visibleRows">0</strong> of
+                        <strong id="totalRows">0</strong>
+                    </p>
+
+                    <!-- Hidden elements for compatibility -->
+                    <span id="txnCountMsg" style="display:none;">0</span>
+
                 </div>
 
-                <!-- Responsive Table Wrapper -->
-                <div class="table-wrapper">
-                    <table id="transactionTable">
-                        <thead>
-                            <tr>
-                                <th onclick="sortTable('date')" class="sortable">
-                                    Date <span class="sort-arrow">↕</span>
-                                </th>
-                                <th onclick="sortTable('description')" class="sortable">
-                                    Description <span class="sort-arrow">↕</span>
-                                </th>
-                                <th onclick="sortTable('category')" class="sortable">
-                                    Category <span class="sort-arrow">↕</span>
-                                </th>
-                                <th onclick="sortTable('amount')" class="sortable">
-                                    Amount <span class="sort-arrow">↕</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <!-- Rows populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Row Count Indicator -->
-                <p class="table-meta">
-                    Showing <strong id="visibleRows">0</strong> of
-                    <strong id="totalRows">0</strong> transactions
-                </p>
-            </div>
-
-            <!-- Reset Button -->
-            <div class="action-bar">
-                <button onclick="resetDashboard()" class="btn-secondary">
-                    ↻ Upload New Statement
-                </button>
             </div>
 
         </section>
@@ -234,7 +233,7 @@
          FOOTER
          ======================================== -->
     <footer>
-        <p>Bank Statement Dashboard &middot; Joyce Gan, Programming Fundamentals June 2026</p>
+        <p>Bank Statement Dashboard &middot; Programming Fundamentals 2025</p>
     </footer>
 
     <!-- ========================================
