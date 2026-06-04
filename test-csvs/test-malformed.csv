@@ -1,0 +1,15 @@
+Date,Description,Amount,Category
+2026-03-01,Monthly Salary,3500.00,Income
+
+2026-03-03,Grab Ride,-12.50,Transport
+this is not a valid row
+2026-03-05,Coffee Bean,-6.80,Food & Beverage
+
+2026-03-07,Netflix,-15.99,Entertainment
+2026-03-08,Bad Amount,abc,Shopping
+2026-03-09,Missing Columns
+2026-03-10,Shopee,-45.00,Shopping
+
+2026-03-12,MRT Top-up,-20.00,Transport
+2026-03-14,Lunch,-8.50,Food & Beverage
+2026-03-15,Freelance,600.00,Income
