@@ -458,6 +458,9 @@ function generateDashboard() {
     // Smooth scroll to dashboard
     document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
 
+    // Show gamification UI (floating button + XP bar)
+    showGamUI();
+
     console.log('✅ Dashboard built successfully!');
 }
 
@@ -575,16 +578,18 @@ function createPieChart() {
     const labels = Object.keys(categoryTotals);
     const data = Object.values(categoryTotals);
 
-    // Color palette for chart slices
+    // Color palette - warm pastels to match cute theme
     const colors = [
-        '#e8553d',   // coral red
-        '#4a90d9',   // blue
-        '#f0a030',   // amber
-        '#2ec4a0',   // mint
-        '#8e6abf',   // plum
-        '#e85a8a',   // blush
-        '#6bc4cf',   // teal
-        '#c4c4c4'    // gray
+        '#e8a0b4',   // rose
+        '#a8d4e6',   // sky
+        '#f0c878',   // butter
+        '#b8e0d2',   // mint
+        '#c8b8e8',   // lavender
+        '#f4b8a0',   // peach
+        '#a8c8a0',   // sage
+        '#d4d0c8',   // stone
+        '#e87461',   // coral
+        '#f0a8c8'    // pink
     ];
 
     // Get the <canvas> element and its 2D drawing context
@@ -614,7 +619,7 @@ function createPieChart() {
 
                 // INTERACTIVE: Slices pop out when hovered
                 // hoverOffset controls how far the slice pops out in pixels
-                hoverOffset: 25,
+                hoverOffset: 15,
 
                 // Slightly expand border on hover for emphasis
                 hoverBorderWidth: 3,
@@ -626,6 +631,11 @@ function createPieChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+
+            // Reserve space inside the chart for hover pop-out
+            layout: {
+                padding: 20
+            },
 
             // Smooth animation when chart loads
             animation: {
@@ -642,14 +652,14 @@ function createPieChart() {
                         padding: 12,
                         usePointStyle: true,       // Use circles instead of squares
                         pointStyle: 'circle',
-                        font: { family: "'DM Sans', sans-serif", size: 11 }
+                        font: { family: "'Nunito', sans-serif", size: 11 }
                     }
                 },
 
                 // Tooltip (popup on hover)
                 tooltip: {
-                    backgroundColor: '#1a1a2e',
-                    titleFont: { family: "'DM Sans', sans-serif", size: 13, weight: '600' },
+                    backgroundColor: '#5c4a3a',
+                    titleFont: { family: "'Nunito', sans-serif", size: 13, weight: '600' },
                     bodyFont: { family: "'Space Mono', monospace", size: 12 },
                     padding: 12,
                     cornerRadius: 8,
@@ -708,12 +718,12 @@ function createBarChart() {
                 label: 'Amount ($)',
                 data: [totalIncome, totalExpenses],
                 backgroundColor: [
-                    'rgba(46, 196, 160, 0.8)',   // Mint green
-                    'rgba(232, 85, 61, 0.8)'     // Coral red
+                    'rgba(184, 224, 210, 0.85)',   // Mint green
+                    'rgba(244, 184, 160, 0.85)'    // Peach
                 ],
                 borderColor: [
-                    'rgba(46, 196, 160, 1)',
-                    'rgba(232, 85, 61, 1)'
+                    'rgba(124, 196, 174, 1)',
+                    'rgba(232, 116, 97, 1)'
                 ],
                 borderWidth: 2,
                 borderRadius: 6
@@ -747,8 +757,8 @@ function createBarChart() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1a1a2e',
-                    titleFont: { family: "'DM Sans', sans-serif", size: 13, weight: '600' },
+                    backgroundColor: '#5c4a3a',
+                    titleFont: { family: "'Nunito', sans-serif", size: 13, weight: '600' },
                     bodyFont: { family: "'Space Mono', monospace", size: 12 },
                     padding: 12,
                     cornerRadius: 8,
@@ -817,12 +827,24 @@ function displayTransactionTable() {
         const amtClass = t.amount > 0 ? 'income' : 'expense';
         const sign = t.amount > 0 ? '+' : '';
 
+        // Find original index in allTransactions for edit/delete
+        const origIndex = allTransactions.indexOf(t);
+
+        // Build memo display if memo exists
+        const memoHtml = t.memo ? '<span class="memo-text">💭 ' + t.memo + '</span>' : '';
+
         // CONCEPT: Template literals use backticks ` and ${variable} for interpolation
         row.innerHTML = `
             <td>${t.date}</td>
-            <td>${t.description}</td>
+            <td>${t.description}${memoHtml}</td>
             <td><span class="category-badge">${t.category}</span></td>
             <td class="${amtClass}">${sign}$${Math.abs(t.amount).toFixed(2)}</td>
+            <td>
+                <div class="row-actions">
+                    <button class="btn-row btn-row-edit" onclick="editTransaction(${origIndex})" title="Edit">✏️</button>
+                    <button class="btn-row btn-row-delete" onclick="confirmDelete(${origIndex})" title="Delete">🗑️</button>
+                </div>
+            </td>
         `;
 
         // Add row to the table body
@@ -957,10 +979,588 @@ function resetDashboard() {
     // Hide any messages
     hideError();
 
+    // Hide gamification UI
+    document.getElementById('addEntryBtn').style.display = 'none';
+    document.getElementById('gamBar').style.display = 'none';
+
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     console.log('🔄 Dashboard reset');
+}
+
+
+// ============================================
+// SECTION 10: GAMIFICATION SYSTEM
+// XP, Levels, Streaks, Manual Entry
+// Demonstrates: LocalStorage API, event handling, game logic
+// ============================================
+
+/**
+ * GAMIFICATION CONFIG
+ * Defines XP per action, level thresholds, badges, and motivational messages
+ *
+ * CONCEPT: Configuration objects keep settings in one place
+ */
+const GAM_CONFIG = {
+    xpPerEntry: 10,
+    xpStreakBonus: 5,
+
+    // Level thresholds: [xpRequired, badge, title]
+    levels: [
+        [0,    '🌱', 'Seedling'],
+        [50,   '🌿', 'Sprout'],
+        [120,  '🌸', 'Blossom'],
+        [200,  '🌻', 'Sunflower'],
+        [350,  '🌺', 'Bloom Master'],
+        [500,  '🌳', 'Money Tree'],
+        [750,  '💎', 'Diamond Saver'],
+        [1000, '👑', 'Budget Royalty']
+    ],
+
+    // Random encouraging messages shown after logging
+    messages: [
+        "You're on a roll~ 🍩",
+        "Every entry counts! ✨",
+        "Smart cookie alert! 🍪",
+        "Look at you go~ 🌟",
+        "Keeping track like a pro! 📊",
+        "Your future self says thanks! 🎉",
+        "Money awareness +1! 🧠",
+        "That's the spirit~ 💪",
+        "Budgeting hero! 🦸",
+        "Small steps, big wins! 🏆"
+    ]
+};
+
+/**
+ * Loads gamification data from LocalStorage
+ * CONCEPT: LocalStorage persists data even after browser closes
+ *
+ * @returns {Object} - {xp, streak, lastEntryDate, manualEntries}
+ */
+function loadGamData() {
+    // Try to get saved data from LocalStorage
+    // CONCEPT: localStorage.getItem() retrieves saved data
+    const saved = localStorage.getItem('spendingDiaryGam');
+
+    if (saved) {
+        // Parse JSON string back to object
+        // CONCEPT: JSON.parse() converts text to JavaScript object
+        return JSON.parse(saved);
+    }
+
+    // Default values if no saved data
+    return {
+        xp: 0,
+        streak: 0,
+        lastEntryDate: null,
+        manualEntries: 0
+    };
+}
+
+/**
+ * Saves gamification data to LocalStorage
+ * @param {Object} data - The gamification data to save
+ */
+function saveGamData(data) {
+    // Convert object to JSON string for storage
+    // CONCEPT: JSON.stringify() converts object to text
+    localStorage.setItem('spendingDiaryGam', JSON.stringify(data));
+}
+
+/**
+ * Calculates current level from XP
+ * @param {number} xp - Current XP points
+ * @returns {Object} - {level, badge, title, xpForNext, xpInLevel, progress}
+ */
+function calculateLevel(xp) {
+    let currentLevel = 0;
+
+    // Loop through levels to find current one
+    // CONCEPT: For loop with break condition
+    for (let i = 0; i < GAM_CONFIG.levels.length; i++) {
+        if (xp >= GAM_CONFIG.levels[i][0]) {
+            currentLevel = i;
+        }
+    }
+
+    const levelData = GAM_CONFIG.levels[currentLevel];
+    const nextLevel = GAM_CONFIG.levels[currentLevel + 1];
+
+    // Calculate progress to next level
+    let progress = 100;
+    let xpForNext = 0;
+
+    if (nextLevel) {
+        const xpInLevel = xp - levelData[0];
+        const xpNeeded = nextLevel[0] - levelData[0];
+        progress = (xpInLevel / xpNeeded) * 100;
+        xpForNext = nextLevel[0] - xp;
+    }
+
+    return {
+        level: currentLevel + 1,
+        badge: levelData[1],
+        title: levelData[2],
+        progress: Math.min(progress, 100),
+        xpForNext: xpForNext
+    };
+}
+
+/**
+ * Updates the gamification UI elements
+ */
+function updateGamUI() {
+    const data = loadGamData();
+    const levelInfo = calculateLevel(data.xp);
+
+    // Update DOM elements
+    document.getElementById('gamBadge').textContent = levelInfo.badge;
+    document.getElementById('gamLevel').textContent = levelInfo.level;
+    document.getElementById('gamXp').textContent = data.xp;
+    document.getElementById('gamXpFill').style.width = levelInfo.progress + '%';
+    document.getElementById('gamStreak').textContent = data.streak;
+}
+
+/**
+ * Shows the gamification bar and add button
+ * Called when dashboard is generated
+ */
+function showGamUI() {
+    document.getElementById('addEntryBtn').style.display = 'flex';
+    document.getElementById('gamBar').style.display = 'flex';
+    updateGamUI();
+}
+
+/**
+ * Calculates and updates streak
+ * @returns {boolean} - Whether the streak increased
+ */
+function updateStreak() {
+    const data = loadGamData();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    if (data.lastEntryDate === today) {
+        // Already logged today, no streak change
+        return false;
+    }
+
+    // Check if yesterday was the last entry (streak continues)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (data.lastEntryDate === yesterdayStr) {
+        // Streak continues!
+        data.streak += 1;
+    } else if (data.lastEntryDate !== today) {
+        // Streak broken, reset to 1
+        data.streak = 1;
+    }
+
+    data.lastEntryDate = today;
+    saveGamData(data);
+    return true;
+}
+
+// ============================================
+// MODAL FUNCTIONS
+// ============================================
+
+/**
+ * Opens the manual entry modal
+ * @param {number} editIdx - If provided, pre-fills form for editing
+ */
+function openEntryModal(editIdx) {
+    document.getElementById('entryModal').style.display = 'flex';
+
+    // Show a random motivational quote
+    const quotes = GAM_CONFIG.messages;
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    document.getElementById('modalQuote').textContent = randomQuote;
+
+    if (typeof editIdx === 'number' && editIdx >= 0) {
+        // EDIT MODE: Pre-fill form with existing transaction
+        const t = allTransactions[editIdx];
+        document.getElementById('editIndex').value = editIdx;
+        document.getElementById('entryDate').value = t.date;
+        document.getElementById('entryDesc').value = t.description;
+        document.getElementById('entryCat').value = t.category;
+        document.getElementById('entryAmt').value = t.amount;
+        document.getElementById('entryMemo').value = t.memo || '';
+        document.getElementById('modalTitle').textContent = '✏️ Edit Entry';
+        document.getElementById('submitBtn').textContent = '💾 Save Changes';
+    } else {
+        // NEW ENTRY MODE
+        document.getElementById('editIndex').value = -1;
+        document.getElementById('entryDate').valueAsDate = new Date();
+        document.getElementById('entryMemo').value = '';
+        document.getElementById('modalTitle').textContent = '📝 New Entry';
+        document.getElementById('submitBtn').textContent = '✨ Log It! (+10 XP)';
+    }
+}
+
+/**
+ * Closes the manual entry modal
+ */
+function closeEntryModal() {
+    document.getElementById('entryModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('entryModal');
+    if (event.target === modal) {
+        closeEntryModal();
+    }
+});
+
+// ============================================
+// FORM SUBMISSION (Manual Entry)
+// ============================================
+
+/**
+ * Set up form submit handler after DOM loads
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('entryForm');
+    if (form) {
+        form.addEventListener('submit', handleEntrySubmit);
+    }
+});
+
+/**
+ * Handles manual transaction entry
+ * Awards XP, updates streak, refreshes dashboard
+ *
+ * CONCEPT: Event handling, form data extraction
+ * @param {Event} event - Form submit event
+ */
+function handleEntrySubmit(event) {
+    // Prevent page refresh
+    event.preventDefault();
+
+    // Get form values
+    const date = document.getElementById('entryDate').value;
+    const description = document.getElementById('entryDesc').value;
+    const category = document.getElementById('entryCat').value;
+    const amount = parseFloat(document.getElementById('entryAmt').value);
+    const memo = document.getElementById('entryMemo').value.trim();
+    const editIndex = parseInt(document.getElementById('editIndex').value);
+
+    // Validation
+    if (!date || !description || !category || isNaN(amount)) {
+        showToast('⚠️ Please fill all fields~', 'xp');
+        return;
+    }
+
+    // Create transaction object (now includes memo)
+    const transaction = {
+        date: date,
+        description: description,
+        amount: amount,
+        category: category,
+        memo: memo || ''
+    };
+
+    // Check if EDITING or ADDING
+    if (editIndex >= 0 && editIndex < allTransactions.length) {
+        // EDIT MODE: Replace existing transaction
+        allTransactions[editIndex] = transaction;
+        showToast('✏️ Entry updated!', 'xp');
+        console.log('✅ Transaction edited at index', editIndex);
+    } else {
+        // ADD MODE: Push new transaction
+        allTransactions.push(transaction);
+
+        // --- GAMIFICATION LOGIC (only for new entries) ---
+        const data = loadGamData();
+        const oldLevel = calculateLevel(data.xp).level;
+
+        // Award XP
+        data.xp += GAM_CONFIG.xpPerEntry;
+        data.manualEntries += 1;
+
+        // Update streak
+        const streakIncreased = updateStreak();
+        const updatedData = loadGamData();
+
+        // Streak bonus XP
+        if (streakIncreased && updatedData.streak > 1) {
+            updatedData.xp += GAM_CONFIG.xpStreakBonus;
+        }
+        updatedData.xp = Math.max(updatedData.xp, data.xp);
+        updatedData.manualEntries = data.manualEntries;
+        saveGamData(updatedData);
+
+        // Check for level up
+        const newLevel = calculateLevel(updatedData.xp);
+
+        // Show toasts
+        showToast('✨ +' + GAM_CONFIG.xpPerEntry + ' XP earned!', 'xp');
+
+        if (streakIncreased && updatedData.streak > 1) {
+            setTimeout(function() {
+                showToast('🔥 ' + updatedData.streak + '-day streak! +' + GAM_CONFIG.xpStreakBonus + ' bonus XP', 'streak');
+            }, 600);
+        }
+
+        if (newLevel.level > oldLevel) {
+            setTimeout(function() {
+                showToast('🎉 Level Up! ' + newLevel.badge + ' ' + newLevel.title, 'level');
+            }, 1200);
+        }
+
+        // Update gamification UI
+        updateGamUI();
+
+        console.log('✅ Manual entry added + XP awarded');
+    }
+
+    // Refresh dashboard
+    calculateAndDisplaySummary();
+    createPieChart();
+    createBarChart();
+    displayTransactionTable();
+    document.getElementById('transactionCount').textContent = allTransactions.length;
+
+    // Close modal and reset form
+    closeEntryModal();
+    document.getElementById('entryForm').reset();
+}
+
+// ============================================
+// TOAST NOTIFICATION SYSTEM
+// ============================================
+
+/**
+ * Shows a toast notification that auto-dismisses
+ *
+ * @param {string} message - Text to display
+ * @param {string} type - 'xp', 'streak', or 'level' for styling
+ */
+function showToast(message, type) {
+    const container = document.getElementById('toastContainer');
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + (type || 'xp');
+    toast.textContent = message;
+
+    // Add to container
+    container.appendChild(toast);
+
+    // Remove after animation (3 seconds)
+    setTimeout(function() {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+
+// ============================================
+// SECTION 11: EDIT & DELETE TRANSACTIONS
+// ============================================
+
+/**
+ * Opens the entry modal pre-filled with transaction data for editing
+ * CONCEPT: Reusing the same form for both add and edit (modal pattern)
+ *
+ * @param {number} index - Index in allTransactions array
+ */
+function editTransaction(index) {
+    openEntryModal(index);
+}
+
+/**
+ * Shows a confirmation dialog before deleting
+ * CONCEPT: User confirmation prevents accidental data loss
+ *
+ * @param {number} index - Index in allTransactions array
+ */
+function confirmDelete(index) {
+    const t = allTransactions[index];
+
+    // Create confirmation overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+        <div class="confirm-card">
+            <h3>🗑️ Delete this entry?</h3>
+            <p><strong>${t.description}</strong><br>
+            ${t.date} &middot; $${Math.abs(t.amount).toFixed(2)}</p>
+            <div class="confirm-buttons">
+                <button class="btn-confirm-cancel" id="cancelDeleteBtn">Keep it</button>
+                <button class="btn-confirm-delete" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Handle cancel
+    document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
+        overlay.remove();
+    });
+
+    // Handle confirm delete
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        deleteTransaction(index);
+        overlay.remove();
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    });
+}
+
+/**
+ * Deletes a transaction from the array and refreshes dashboard
+ * CONCEPT: Array.splice() removes items from an array
+ *
+ * @param {number} index - Index to remove
+ */
+function deleteTransaction(index) {
+    // Remove from array
+    // CONCEPT: splice(index, 1) removes 1 item at position index
+    allTransactions.splice(index, 1);
+
+    // Refresh everything
+    calculateAndDisplaySummary();
+    createPieChart();
+    createBarChart();
+    displayTransactionTable();
+    document.getElementById('transactionCount').textContent = allTransactions.length;
+
+    showToast('🗑️ Entry deleted', 'xp');
+    console.log('✅ Transaction deleted at index', index);
+}
+
+
+// ============================================
+// SECTION 12: MERGE / ADD ANOTHER CSV
+// Consolidates multiple CSV files
+// ============================================
+
+/**
+ * Triggers the hidden file input for merging additional CSV
+ */
+function triggerMergeCSV() {
+    const mergeInput = document.getElementById('mergeFileInput');
+    mergeInput.value = ''; // Reset so same file can be selected again
+    mergeInput.click();
+}
+
+// Set up merge file input listener
+document.addEventListener('DOMContentLoaded', function() {
+    const mergeInput = document.getElementById('mergeFileInput');
+    if (mergeInput) {
+        mergeInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith('.csv')) {
+                showToast('⚠️ Please select a CSV file', 'xp');
+                return;
+            }
+
+            // Read and merge the file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                mergeCSV(e.target.result, file.name);
+            };
+            reader.readAsText(file);
+        });
+    }
+});
+
+/**
+ * Merges new CSV data with existing transactions
+ * Avoids duplicates by checking date + description + amount
+ *
+ * CONCEPT: Combining data from multiple sources (data consolidation)
+ *
+ * @param {string} csvText - Raw CSV content
+ * @param {string} fileName - Name of file for feedback
+ */
+function mergeCSV(csvText, fileName) {
+    console.log('📁 Merging CSV:', fileName);
+
+    const lines = csvText.split('\n');
+    let addedCount = 0;
+    let skippedCount = 0;
+
+    // Parse each line (skip header)
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line === '') continue;
+
+        const values = line.split(',');
+        if (values.length < 3) continue;
+
+        const transaction = {
+            date: values[0].trim(),
+            description: values[1].trim(),
+            amount: parseFloat(values[2].trim()),
+            category: values[3] ? values[3].trim() : categorizeTransaction(values[1].trim()),
+            memo: ''
+        };
+
+        if (isNaN(transaction.amount)) continue;
+
+        // Check for duplicates
+        // CONCEPT: Checking if identical transaction already exists
+        let isDuplicate = false;
+        for (let j = 0; j < allTransactions.length; j++) {
+            const existing = allTransactions[j];
+            if (existing.date === transaction.date &&
+                existing.description === transaction.description &&
+                existing.amount === transaction.amount) {
+                isDuplicate = true;
+                break;
+            }
+        }
+
+        if (isDuplicate) {
+            skippedCount++;
+        } else {
+            allTransactions.push(transaction);
+            addedCount++;
+        }
+    }
+
+    console.log('✅ Merged: ' + addedCount + ' added, ' + skippedCount + ' duplicates skipped');
+
+    // Refresh dashboard
+    calculateAndDisplaySummary();
+    createPieChart();
+    createBarChart();
+    displayTransactionTable();
+    document.getElementById('transactionCount').textContent = allTransactions.length;
+
+    // Show feedback
+    showToast('📁 Added ' + addedCount + ' new entries from ' + fileName, 'xp');
+    if (skippedCount > 0) {
+        setTimeout(function() {
+            showToast('⏭️ Skipped ' + skippedCount + ' duplicates', 'streak');
+        }, 600);
+    }
+
+    // Award XP for merging
+    if (addedCount > 0) {
+        const data = loadGamData();
+        data.xp += 5; // Bonus XP for merging
+        saveGamData(data);
+        updateGamUI();
+
+        setTimeout(function() {
+            showToast('✨ +5 XP for consolidating!', 'xp');
+        }, 1200);
+    }
 }
 
 

@@ -10,7 +10,7 @@
     <!-- Google Fonts for professional typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <!-- External CSS file -->
     <link rel="stylesheet" href="style.css">
@@ -29,10 +29,10 @@
              ======================================== -->
         <header>
             <div class="logo">
-                <span class="logo-icon">◈</span>
+                <span class="logo-icon">🧁</span>
             </div>
-            <h1>Bank Statement Dashboard</h1>
-            <p class="subtitle">Upload a CSV statement. See where your money goes.</p>
+            <h1>My Spending Diary</h1>
+            <p class="subtitle">Let's see where your pennies went~ ✿</p>
         </header>
 
         <!-- ========================================
@@ -45,14 +45,14 @@
 
                 <!-- Upload visual indicator -->
                 <div class="upload-visual">
-                    <span class="upload-arrow">↑</span>
+                    <span class="upload-arrow">📂</span>
                 </div>
 
-                <h2>Drop your CSV here</h2>
+                <h2>Drop your CSV here~</h2>
 
                 <!-- Instructions -->
                 <p class="upload-hint">
-                    Format: Date, Description, Amount, Category
+                    Format: Date, Description, Amount, Category ✧
                 </p>
 
                 <!-- File Input (hidden, triggered by label) -->
@@ -103,61 +103,68 @@
                 <!-- Summary Statistics Cards -->
                 <div class="stats-grid">
                     <div class="stat-card stat-income">
-                        <p class="stat-label">Income</p>
+                        <span class="stat-emoji">🌱</span>
+                        <p class="stat-label">Money In</p>
                         <p class="stat-value" id="income">$0.00</p>
                     </div>
                     <div class="stat-card stat-expense">
-                        <p class="stat-label">Expenses</p>
+                        <span class="stat-emoji">🍰</span>
+                        <p class="stat-label">Spent</p>
                         <p class="stat-value" id="expenses">$0.00</p>
                     </div>
                     <div class="stat-card stat-balance">
-                        <p class="stat-label">Balance</p>
+                        <span class="stat-emoji">✨</span>
+                        <p class="stat-label">Left Over</p>
                         <p class="stat-value" id="balance">$0.00</p>
                     </div>
                     <div class="stat-card stat-count">
-                        <p class="stat-label">Transactions</p>
+                        <span class="stat-emoji">📝</span>
+                        <p class="stat-label">Entries</p>
                         <p class="stat-value" id="transactionCount">0</p>
                     </div>
                 </div>
 
-                <!-- Reset Button -->
-                <button onclick="resetDashboard()" class="btn-secondary btn-reset">
-                    ↻ New File
-                </button>
+                <!-- Action Buttons -->
+                <div class="topbar-actions">
+                    <button onclick="triggerMergeCSV()" class="btn-secondary btn-reset">
+                        📁 Add CSV
+                    </button>
+                    <button onclick="resetDashboard()" class="btn-secondary btn-reset">
+                        🔄 New File
+                    </button>
+                </div>
+
+                <!-- Hidden file input for merging CSV -->
+                <input type="file" id="mergeFileInput" accept=".csv" style="display:none;">
 
             </div>
 
             <!-- ========================================
-                 MAIN CONTENT: Two-column layout
-                 Left = Charts | Right = Transaction List
+                 MAIN CONTENT: Three-column layout
+                 Pie Chart | Bar Chart | Transaction List
                  ======================================== -->
             <div class="dash-body">
 
-                <!-- LEFT COLUMN: Charts -->
-                <div class="dash-left">
-
-                    <!-- Pie Chart: Category Spending -->
-                    <div class="chart-box">
-                        <h3 class="chart-label">Spending by Category</h3>
-                        <canvas id="pieChart"
-                                aria-label="Pie chart showing spending by category">
-                        </canvas>
-                    </div>
-
-                    <!-- Bar Chart: Income vs Expenses -->
-                    <div class="chart-box">
-                        <h3 class="chart-label">Income vs Expenses</h3>
-                        <canvas id="barChart"
-                                aria-label="Bar chart comparing income and expenses">
-                        </canvas>
-                    </div>
-
+                <!-- COLUMN 1: Pie Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-label">🍩 Where the Money Went</h3>
+                    <canvas id="pieChart"
+                            aria-label="Pie chart showing spending by category">
+                    </canvas>
                 </div>
 
-                <!-- RIGHT COLUMN: Transaction List (scrollable) -->
+                <!-- COLUMN 2: Bar Chart -->
+                <div class="chart-box">
+                    <h3 class="chart-label">📊 In vs Out</h3>
+                    <canvas id="barChart"
+                            aria-label="Bar chart comparing income and expenses">
+                    </canvas>
+                </div>
+
+                <!-- COLUMN 3: Transaction List (scrollable) -->
                 <div class="dash-right">
 
-                    <h3 class="panel-title">Transactions</h3>
+                    <h3 class="panel-title">📋 Transaction Log</h3>
 
                     <!-- Search & Filter Controls -->
                     <div class="table-controls">
@@ -205,6 +212,7 @@
                                     <th onclick="sortTable('amount')" class="sortable">
                                         Amount <span class="sort-arrow">↕</span>
                                     </th>
+                                    <th class="th-actions">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody">
@@ -227,6 +235,113 @@
             </div>
 
         </section>
+
+        <!-- ========================================
+             FLOATING ADD BUTTON
+             Opens manual entry form
+             ======================================== -->
+        <button id="addEntryBtn" class="fab-button" onclick="openEntryModal()" style="display:none;">
+            <span class="fab-icon">+</span>
+            <span class="fab-label">Log Entry</span>
+        </button>
+
+        <!-- ========================================
+             GAMIFICATION BAR (shown on dashboard)
+             XP, Level, Streak
+             ======================================== -->
+        <div id="gamBar" class="gam-bar" style="display:none;">
+            <div class="gam-level">
+                <span class="gam-badge" id="gamBadge">🌱</span>
+                <span class="gam-level-text">Lv.<span id="gamLevel">1</span></span>
+            </div>
+            <div class="gam-xp-container">
+                <div class="gam-xp-bar">
+                    <div class="gam-xp-fill" id="gamXpFill" style="width:0%"></div>
+                </div>
+                <span class="gam-xp-text"><span id="gamXp">0</span> XP</span>
+            </div>
+            <div class="gam-streak">
+                🔥 <span id="gamStreak">0</span> day streak
+            </div>
+        </div>
+
+        <!-- ========================================
+             MANUAL ENTRY MODAL
+             Cute form for adding transactions
+             ======================================== -->
+        <div id="entryModal" class="modal-overlay" style="display:none;">
+            <div class="modal-card">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h2 id="modalTitle">📝 New Entry</h2>
+                    <button class="modal-close" onclick="closeEntryModal()">✕</button>
+                </div>
+
+                <!-- Hidden field to track if editing -->
+                <input type="hidden" id="editIndex" value="-1">
+
+                <!-- Entry Form -->
+                <form id="entryForm" class="entry-form">
+
+                    <div class="form-field">
+                        <label>📅 Date</label>
+                        <input type="date" id="entryDate" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label>📝 What was it?</label>
+                        <input type="text" id="entryDesc" placeholder="e.g. Bubble tea with friends~" required>
+                    </div>
+
+                    <div class="form-row-2col">
+                        <div class="form-field">
+                            <label>🏷️ Category</label>
+                            <select id="entryCat" required>
+                                <option value="">Pick one~</option>
+                                <option value="Food & Beverage">🍜 Food & Beverage</option>
+                                <option value="Transport">🚌 Transport</option>
+                                <option value="Entertainment">🎮 Entertainment</option>
+                                <option value="Shopping">🛍️ Shopping</option>
+                                <option value="Pet Care">🐾 Pet Care</option>
+                                <option value="Healthcare">🏥 Healthcare</option>
+                                <option value="Utilities">💡 Utilities</option>
+                                <option value="Income">💰 Income</option>
+                                <option value="Transfer">🔄 Transfer</option>
+                                <option value="Investment">📈 Investment</option>
+                                <option value="Donation">💝 Donation</option>
+                                <option value="Other">📦 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label>💵 Amount</label>
+                            <input type="number" id="entryAmt" step="0.01" placeholder="e.g. -5.50" required>
+                            <small>Negative = spent, Positive = earned</small>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>💭 Memo (optional)</label>
+                        <input type="text" id="entryMemo" placeholder="e.g. Treat for finishing exams~" maxlength="100">
+                    </div>
+
+                    <button type="submit" class="btn-primary btn-submit" id="submitBtn">
+                        ✨ Log It! (+10 XP)
+                    </button>
+
+                </form>
+
+                <!-- Motivational Quote -->
+                <p class="modal-quote" id="modalQuote">Every entry counts~ You're doing great! 🌟</p>
+
+            </div>
+        </div>
+
+        <!-- ========================================
+             TOAST NOTIFICATION (pops up after actions)
+             ======================================== -->
+        <div id="toastContainer" class="toast-container"></div>
+
     </div>
 
     <!-- ========================================
